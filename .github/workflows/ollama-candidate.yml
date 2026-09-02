@@ -1,0 +1,33 @@
+name: ollama-candidate
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 1 1,7 *"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: ollama-candidate
+  cancel-in-progress: false
+
+jobs:
+  propose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - name: Mirror Ollama candidate and open promote PR
+        run: python mirror.py --apply
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
