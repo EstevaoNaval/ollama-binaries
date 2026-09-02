@@ -15,6 +15,7 @@ runtime.legacy.lock.json  previous pin (written by --apply)
 tests/                    CPU unit tests (no binary download in CI)
 .github/workflows/
   ollama-candidate.yml    cron + workflow_dispatch → python mirror.py --apply
+  ollama-promote.yml      merge to main (runtime.lock.json) → stable release
   test.yml                pytest
 ```
 
@@ -36,5 +37,6 @@ pytest
 2. PR updates `runtime.lock.json` so `url` fields point at this repo's Release.
 3. Previous pin is copied to `runtime.legacy.lock.json`.
 4. Human merges the PR in **this** repository.
+5. `ollama-promote` workflow clears the prerelease flag on the matching GitHub Release.
 
 Downstream projects copy the merged lock when they choose to bump. That copy is not part of this CI.

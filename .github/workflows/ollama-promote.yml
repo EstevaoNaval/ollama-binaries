@@ -1,0 +1,39 @@
+name: ollama-promote
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - runtime.lock.json
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ollama-promote
+  cancel-in-progress: false
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Promote release to stable
+        run: |
+          TAG=$(python3 -c "import json; print(json.load(open('runtime.lock.json'))['upstream_tag'])")
+          VERSION=$(python3 -c "import json; print(json.load(open('runtime.lock.json'))['ollama_version'])")
+
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            echo "No release for $TAG; skipping"
+            exit 0
+          fi
+
+          if [ "$(gh release view "$TAG" --json isPrerelease -q .isPrerelease)" = "true" ]; then
+            gh release edit "$TAG" --prerelease=false --latest \
+              --notes "Stable Ollama runtime ${VERSION} mirrored from ollama/ollama. GGUF is not included."
+            echo "Promoted $TAG to stable"
+          else
+            echo "Release $TAG is already stable; nothing to do"
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
